@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "207955267399",
+    "project_id": "flashcards-flutter-andrew",
+    "storage_bucket": "flashcards-flutter-andrew.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207955267399:android:0f464a5643ef03cd50c662",
+        "android_client_info": {
+          "package_name": "com.example.note_card_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0cARAA25vJ7GQsISAdZY2pDe9rnQeSMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:207955267399:android:77171751a1620c8f50c662",
+        "android_client_info": {
+          "package_name": "com.krasuskicodes.flashcards"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0cARAA25vJ7GQsISAdZY2pDe9rnQeSMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
