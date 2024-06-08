@@ -1,33 +1,49 @@
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flip_card/flip_card.dart';
-import 'package:flutter/widgets.dart';
 import 'package:note_card_app/card_operations/delete_card.dart';
 import 'package:note_card_app/card_operations/new_card.dart';
 import 'package:note_card_app/card_operations/update_card.dart';
-import 'package:note_card_app/components/flashcard_groups.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 class CardView extends StatelessWidget {
-  final String text;
-  const CardView({Key? key, required this.text}) : super(key: key);
+ final String text;
+  final FlutterTts flutterTts = FlutterTts();
+
+  CardView({super.key, required this.text});
+
+  void _speak() async {
+    await flutterTts.speak(text);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 10,
       shadowColor: Colors.black,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(text,
-              style: const TextStyle(
-                fontSize: 20,
-              ),),
-
-        ),
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.topLeft,
+            child: IconButton(
+              icon: const Icon(Icons.volume_up),
+              onPressed: _speak,
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -36,8 +52,7 @@ class CardView extends StatelessWidget {
 class FlashcardView extends StatefulWidget {
   final String collectionName;
 
-  const FlashcardView({Key? key, required this.collectionName})
-      : super(key: key);
+  const FlashcardView({super.key, required this.collectionName});
 
   @override
   State<FlashcardView> createState() => _FlashcardViewState();
@@ -78,8 +93,7 @@ class _FlashcardViewState extends State<FlashcardView> {
           errorMessage = 'No flashcards found.';
         });
       } else {
-        List<Map<String, dynamic>> fetchedFlashcards =
-            querySnapshot.docs.map((doc) {
+        List<Map<String, dynamic>> fetchedFlashcards = querySnapshot.docs.map((doc) {
           return {
             'front': doc['front'],
             'back': doc['back'],
@@ -88,10 +102,12 @@ class _FlashcardViewState extends State<FlashcardView> {
           };
         }).toList();
 
-        fetchedFlashcards.sort((a, b) => (a['createdAt'] as Timestamp)
-            .compareTo(b['createdAt'] as Timestamp));
+        fetchedFlashcards.sort((a, b) => (a['createdAt'] as Timestamp).compareTo(b['createdAt'] as Timestamp));
         setState(() {
           flashcards = fetchedFlashcards;
+          if (currentIndex >= flashcards.length) {
+            currentIndex = flashcards.isEmpty ? 0 : flashcards.length - 1;
+          }
         });
       }
     } catch (e) {
@@ -115,6 +131,9 @@ class _FlashcardViewState extends State<FlashcardView> {
 
   Widget buildAddNewCardButton() {
     return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade400,
+                ),
       onPressed: () async {
         await Navigator.push(
           context,
@@ -122,15 +141,19 @@ class _FlashcardViewState extends State<FlashcardView> {
             builder: (context) => NewCard(
               collectionName: widget.collectionName,
               onCardAdded: () {
-                setState(() {
-                  fetchFlashcards(); // Ensure this method updates the state with new data
-                });
+                fetchFlashcards(); // Ensure this method updates the state with new data
               },
             ),
           ),
         );
       },
-      child: const Text('Add New Card'),
+      child: const Text(
+        'Add New Card',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+        ),
+      ),
     );
   }
 
@@ -145,9 +168,7 @@ class _FlashcardViewState extends State<FlashcardView> {
             collectionName: widget.collectionName,
             documentName: flashcards[currentIndex]['docId'] ?? '',
             onCardUpdated: () {
-              setState(() {
-                fetchFlashcards();
-              });
+              fetchFlashcards();
             },
           ),
         ),
@@ -159,9 +180,7 @@ class _FlashcardViewState extends State<FlashcardView> {
           builder: (context) => NewCard(
             collectionName: widget.collectionName,
             onCardAdded: () {
-              setState(() {
-                fetchFlashcards();
-              });
+              fetchFlashcards();
             },
           ),
         ),
@@ -174,14 +193,18 @@ class _FlashcardViewState extends State<FlashcardView> {
             collectionName: widget.collectionName,
             documentName: flashcards[currentIndex]['docId'] ?? '',
             onCardDeleted: () {
-              setState(() {
-                fetchFlashcards();
-              });
+              if(flashcards.length == 1) {
+                flashcards = [];
+              } 
+              fetchFlashcards();
+              
             },
           ),
         ),
       );
-    } else if (value == 'Delete Group') {}
+    } else if (value == 'Delete Group') {
+      // Handle delete group action if necessary
+    }
   }
 
   @override
@@ -190,13 +213,15 @@ class _FlashcardViewState extends State<FlashcardView> {
       appBar: AppBar(
         title: const Text('Flashcards'),
         actions: <Widget>[
-          PopupMenuButton<String>(
+          Container(
+            margin: const EdgeInsets.only(right: 20),
+          child: PopupMenuButton<String>(
             onSelected: handleMenuAction,
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Icon(Icons.settings),
-                Text('Settings'),
+                Icon(Icons.more_vert),
+                Text('Options'),
               ],
             ),
             itemBuilder: (BuildContext context) {
@@ -220,6 +245,7 @@ class _FlashcardViewState extends State<FlashcardView> {
                     }).toList();
             },
           ),
+          ),
         ],
       ),
       body: Center(
@@ -227,15 +253,13 @@ class _FlashcardViewState extends State<FlashcardView> {
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    errorMessage.isNotEmpty
-                        ? errorMessage
-                        : 'No flashcards created yet.',
+                  const Text(
+                     'No flashcards created yet.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
-                    )
+                    ),
                   ),
                   const SizedBox(height: 20),
                   buildAddNewCardButton(),
@@ -245,7 +269,7 @@ class _FlashcardViewState extends State<FlashcardView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Center(
-                    child: Container(
+                    child: SizedBox(
                       height: 250,
                       width: 350,
                       child: FlipCard(

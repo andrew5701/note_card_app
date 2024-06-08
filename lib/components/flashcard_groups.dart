@@ -7,7 +7,7 @@ import 'package:note_card_app/firebase/login_register.dart';
 import 'add_new_group.dart';
 
 class FlashcardGroup extends StatefulWidget {
-  const FlashcardGroup({Key? key}) : super(key: key);
+  const FlashcardGroup({super.key});
 
   @override
   State<FlashcardGroup> createState() => _FlashcardGroupState();
@@ -76,7 +76,7 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
               await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => const LoginPage()),
               );
             },
           ),
@@ -123,22 +123,23 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
                 );
               }).toList(),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => AddNewGroup(
-                      onNewGroupAdded: () {
-                        setState(() {
-                          fetchFlashcardGroups(); // Ensure this method updates the state with new data
-                        });
-                      },
-                    )),
-          );
-        },
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: FloatingActionButton.extended(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => AddNewGroup(
+                onNewGroupAdded: () {
+                  setState(() {
+                    fetchFlashcardGroups(); // Ensure this method updates the state with new data
+                  });
+                },
+              )),
+    );
+  },
+  icon: const Icon(Icons.add),
+  label: const Text('Add A New Group'),
+),
     );
   }
 }

@@ -1,7 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:note_card_app/components/flashcard_view.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
 
 class NewCard extends StatefulWidget {

@@ -59,7 +59,7 @@ class _AddNewGroupState extends State<AddNewGroup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create Collection'),
+        title: const Text('Create Collection'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -71,12 +71,23 @@ class _AddNewGroupState extends State<AddNewGroup> {
               decoration: InputDecoration(
                 labelText: 'Collection Name',
                 errorText: errorMessage.isNotEmpty ? errorMessage : null,
+                fillColor: Colors.white,
+                filled: true,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade400,
+                ),
               onPressed: () => createCollectionAndCloseScreen(context),
-              child: Text('Create Collection'),
+              child: const Text(
+                'Create Collection',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
             ),
           ],
         ),

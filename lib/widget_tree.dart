@@ -18,9 +18,9 @@ class _WidgetTreeState extends State<WidgetTree> {
       stream: Auth().userChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasData) {
-          return FlashcardGroup(); 
+          return const FlashcardGroup(); 
         } else {
           return const LoginPage();
         }

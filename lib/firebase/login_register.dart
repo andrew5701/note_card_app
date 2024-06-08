@@ -20,39 +20,72 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> signInWithEmailAndPassword() async {
     try {
-      await Auth().signInWithEmailAndPassword(emailController.text, passwordController.text);
+      await Auth().signInWithEmailAndPassword(
+          emailController.text, passwordController.text);
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => FlashcardGroup()),
+          MaterialPageRoute(builder: (context) => const FlashcardGroup()),
         );
       }
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-      });
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(e.toString()),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
   Future<void> createUserWithEmailAndPassword() async {
     try {
-      await Auth().createUserWithEmailAndPassword(emailController.text, passwordController.text);
+      await Auth().createUserWithEmailAndPassword(
+          emailController.text, passwordController.text);
 
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirestoreService.instance.collection('users').doc(user.uid).set({});
+        await FirestoreService.instance
+            .collection('users')
+            .doc(user.uid)
+            .set({});
       }
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => FlashcardGroup()),
+          MaterialPageRoute(builder: (context) => const FlashcardGroup()),
         );
       }
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-      });
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(e.toString()),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -61,20 +94,49 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _entryField(String title, TextEditingController controller) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: title,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: Colors
+                  .blue, // Used for the underline and the label text when focused
+            ),
+        inputDecorationTheme: const InputDecorationTheme(
+          focusedBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+                color: Colors
+                    .blue), // Color of the underline when the TextField is focused
+          ),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: title == 'Password' ? true : false,
+        decoration: InputDecoration(
+          labelText: title,
+          fillColor: Colors.white,
+          filled: true,
+        ),
+        cursorColor: Colors.blue,
       ),
     );
   }
 
   Widget _submitButton() {
     return Container(
-      margin: EdgeInsets.only(top: 20.0),
+      margin: const EdgeInsets.only(top: 20.0),
       child: ElevatedButton(
-        onPressed: isLogin ? signInWithEmailAndPassword : createUserWithEmailAndPassword,
-        child: Text(isLogin ? 'Login' : 'Register'),
+        style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade400,
+                ),
+        onPressed: isLogin
+            ? signInWithEmailAndPassword
+            : createUserWithEmailAndPassword,
+        child: Text(isLogin ? 'Login' : 'Register',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+        ),
+        ),
       ),
     );
   }
@@ -86,7 +148,12 @@ class _LoginPageState extends State<LoginPage> {
           isLogin = !isLogin;
         });
       },
-      child: Text(isLogin ? 'Need an account? Register' : 'Already have an account? Login'),
+      child: Text(
+        isLogin
+            ? 'Need an account? Register'
+            : 'Already have an account? Login',
+        style: const TextStyle(color: Colors.white),
+      ),
     );
   }
 
@@ -105,7 +172,10 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             _entryField('Email', emailController),
-            _entryField('Password', passwordController),
+            Container(
+              margin: const EdgeInsets.only(top: 20.0),
+              child: _entryField('Password', passwordController),
+            ),
             _submitButton(),
             _loginOrRegister(),
             Text(errorMessage ?? ''),
