@@ -7,7 +7,6 @@ class Auth {
 
   Stream<User?> get userChanges => _auth.authStateChanges();
 
-
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
@@ -28,4 +27,3 @@ class Auth {
     await _auth.signOut();
   }
 }
-
