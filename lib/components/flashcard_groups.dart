@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:note_card_app/components/flashcard_view.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
 import 'package:note_card_app/firebase/login_register.dart';
-import 'add_new.dart';
+import 'add_new_group.dart';
 
 class FlashcardGroup extends StatefulWidget {
   const FlashcardGroup({Key? key}) : super(key: key);
@@ -14,7 +14,7 @@ class FlashcardGroup extends StatefulWidget {
 }
 
 class _FlashcardGroupState extends State<FlashcardGroup> {
-  List<String> groups = ['Andrew'];
+  List<String> groups = [];
   String errorMessage = '';
 
   @override
@@ -38,7 +38,16 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
           await FirestoreService.instance.collection('users').doc(userId).get();
 
       if (userDoc.exists) {
-        List<String> fetchedGroups = List.from(userDoc['flashcard_collection']);
+        QuerySnapshot flashcardGroupsSnapshot = await FirestoreService.instance
+            .collection('users')
+            .doc(userId)
+            .collection('flashcard_groups')
+            .orderBy('created_at', descending: false)
+            .get();
+
+        List<String> fetchedGroups =
+            flashcardGroupsSnapshot.docs.map((doc) => doc.id).toList();
+
         setState(() {
           groups = fetchedGroups;
         });
@@ -49,7 +58,7 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
       }
     } catch (e) {
       setState(() {
-        errorMessage = 'Failed to fetch groups: $e';
+        // errorMessage = 'Failed to fetch groups: $e';
       });
     }
   }
@@ -100,10 +109,10 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => FlashcardView(collectionName: group),
+                          builder: (context) =>
+                              FlashcardView(collectionName: group),
                         ),
                       );
-
                     },
                     child: Center(
                       child: Text(
@@ -118,7 +127,14 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AddNewGroup()),
+            MaterialPageRoute(
+                builder: (context) => AddNewGroup(
+                      onNewGroupAdded: () {
+                        setState(() {
+                          fetchFlashcardGroups(); // Ensure this method updates the state with new data
+                        });
+                      },
+                    )),
           );
         },
         child: Icon(Icons.add),
