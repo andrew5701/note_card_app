@@ -1,9 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_card_app/auth.dart';
 import 'package:note_card_app/components/flashcard_groups.dart';
-import 'package:note_card_app/firebase/home_page.dart';
 import 'package:note_card_app/firebase/login_register.dart';
-
 
 class WidgetTree extends StatefulWidget {
   const WidgetTree({super.key});
@@ -15,17 +14,17 @@ class WidgetTree extends StatefulWidget {
 class _WidgetTreeState extends State<WidgetTree> {
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
+    return StreamBuilder<User?>(
       stream: Auth().userChanges,
       builder: (context, snapshot) {
-        if(snapshot.hasData){
-          return FlashcardGroup();
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasData) {
+          return FlashcardGroup(); 
         } else {
           return const LoginPage();
         }
-        
       },
-
     );
   }
 }
