@@ -124,22 +124,50 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
               }).toList(),
             ),
       floatingActionButton: FloatingActionButton.extended(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => AddNewGroup(
-                onNewGroupAdded: () {
-                  setState(() {
-                    fetchFlashcardGroups(); // Ensure this method updates the state with new data
-                  });
-                },
-              )),
-    );
-  },
-  icon: const Icon(Icons.add),
-  label: const Text('Add A New Group'),
-),
+        backgroundColor: Colors.blue.shade400,
+        onPressed: () {
+          if (groups.length == 20) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Limit Reached'),
+                content: const Text('You cannot add more than 20 Study Sets.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddNewGroup(
+                  onNewGroupAdded: () {
+                    setState(() {
+                      fetchFlashcardGroups(); // Ensure this method updates the state with new data
+                    });
+                  },
+                ),
+              ),
+            );
+          }
+        },
+        icon: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 30.0,
+        ),
+        label: const Text(
+          'Add A New Group',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+      ),
     );
   }
 }
