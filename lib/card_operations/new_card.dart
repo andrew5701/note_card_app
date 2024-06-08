@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NewCard extends StatefulWidget {
   final String collectionName;
@@ -16,6 +19,8 @@ class NewCard extends StatefulWidget {
 class _NewCardState extends State<NewCard> {
   final TextEditingController _frontcontroller = TextEditingController();
   final TextEditingController _backcontroller = TextEditingController();
+  File? _frontImage;
+  File? _backImage;
 
   @override
   void dispose() {
@@ -26,6 +31,14 @@ class _NewCardState extends State<NewCard> {
 
   final user = FirebaseAuth.instance.currentUser;
   late final String? userId;
+
+  Future _pickImageFromGallary() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      _frontImage = File(image!.path);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,8 +82,8 @@ class _NewCardState extends State<NewCard> {
                   backgroundColor: Colors.blue.shade400,
                 ),
                 onPressed: () async {
-
-                  if(_frontcontroller.text == '' || _backcontroller.text == ''){
+                  if (_frontcontroller.text == '' ||
+                      _backcontroller.text == '') {
                     return showDialog(
                       context: context,
                       builder: (context) {
@@ -121,6 +134,65 @@ class _NewCardState extends State<NewCard> {
                 ),
               ),
             ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    const Text(
+                      'Front Image',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    MaterialButton(
+                      color: Colors.green,
+                      child: const Text(
+                        'Upload Image \n from gallery',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {
+                        _pickImageFromGallary();
+                      },
+                    ),
+                    MaterialButton(
+                      color: Colors.green,
+                      child: const Text(
+                        'Upload image \n from camera',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {},
+                    ),
+                    _frontImage != null
+                        ? Image.file(_frontImage!)
+                        : const Text('No image selected')
+                  ],
+                ),
+                // Column for Back
+                Column(
+                  children: [
+                    const Text(
+                      'Back Image',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    MaterialButton(
+                      color: Colors.blue,
+                      child: const Text(
+                        'Upload Image \n from gallery',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {},
+                    ),
+                    MaterialButton(
+                      color: Colors.blue,
+                      child: const Text(
+                        'Upload image \n from camera',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ],
+            )
           ],
         ),
       ),
