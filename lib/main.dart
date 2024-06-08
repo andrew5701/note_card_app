@@ -22,35 +22,12 @@ class MyApp extends StatelessWidget {
       title: 'Note Card App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.blue.shade800,
+        fontFamily: 'Roboto',
       ),
       home: const WidgetTree(),
     );
   }
 }
 
-class Home extends StatefulWidget {
-  const Home({super.key});
 
-  @override
-  State<Home> createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
-  List<Flashcard> flashcards = [
-
-    
-
-  ];
-
-
-  @override
-  Widget build(BuildContext context) {
-    var isLandscape =
-        MediaQuery.of(context).orientation == Orientation.landscape;
-
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Color.fromARGB(255, 11, 77, 190)),
-      body: const FlashcardGroup(),
-    );
-  }
-}
