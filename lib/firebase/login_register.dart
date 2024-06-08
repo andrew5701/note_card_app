@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_card_app/auth.dart';
+import 'package:note_card_app/components/flashcard_groups.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,6 +21,12 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> signInWithEmailAndPassword() async {
     try {
       await Auth().signInWithEmailAndPassword(emailController.text, passwordController.text);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FlashcardGroup()),
+        );
+      }
     } catch (e) {
       setState(() {
         errorMessage = e.toString();
@@ -28,29 +34,29 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-Future<void> createUserWithEmailAndPassword() async {
-  try {
-    await Auth().createUserWithEmailAndPassword(emailController.text, passwordController.text);
+  Future<void> createUserWithEmailAndPassword() async {
+    try {
+      await Auth().createUserWithEmailAndPassword(emailController.text, passwordController.text);
 
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirestoreService.instance.collection('users').doc(user.uid).set({});
+      }
 
-      await FirestoreService.instance.collection('users').doc(user.uid).set({});
-
-
-    } else {
-
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => FlashcardGroup()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+      });
     }
-  } catch (e) {
-
-    setState(() {
-      errorMessage = e.toString();
-    });
   }
-}
 
-
-  Widget _title(){
+  Widget _title() {
     return Text(isLogin ? 'Login Page' : 'Register Page');
   }
 
@@ -63,7 +69,7 @@ Future<void> createUserWithEmailAndPassword() async {
     );
   }
 
-  Widget _submitButton(){
+  Widget _submitButton() {
     return Container(
       margin: EdgeInsets.only(top: 20.0),
       child: ElevatedButton(
@@ -73,9 +79,9 @@ Future<void> createUserWithEmailAndPassword() async {
     );
   }
 
-  Widget _loginOrRegister(){
+  Widget _loginOrRegister() {
     return TextButton(
-      onPressed: (){
+      onPressed: () {
         setState(() {
           isLogin = !isLogin;
         });
@@ -106,7 +112,6 @@ Future<void> createUserWithEmailAndPassword() async {
           ],
         ),
       ),
-
     );
   }
 }
