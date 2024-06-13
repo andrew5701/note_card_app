@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
@@ -32,12 +31,22 @@ class _NewCardState extends State<NewCard> {
   final user = FirebaseAuth.instance.currentUser;
   late final String? userId;
 
-  Future _pickImageFromGallary() async {
-    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+  Future _pickImageFromGallery() async {
+    try {
+      final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
 
-    setState(() {
-      _frontImage = File(image!.path);
-    });
+      if (image == null) {
+        // Handle the case where the user didn't pick any image
+        return;
+      }
+
+      setState(() {
+        _frontImage = File(image.path);
+      });
+    } catch (e) {
+      // Handle errors, such as permission issues
+      print('Error picking image: $e');
+    }
   }
 
   @override
@@ -82,8 +91,7 @@ class _NewCardState extends State<NewCard> {
                   backgroundColor: Colors.blue.shade400,
                 ),
                 onPressed: () async {
-                  if (_frontcontroller.text == '' ||
-                      _backcontroller.text == '') {
+                  if (_frontcontroller.text.isEmpty || _backcontroller.text.isEmpty) {
                     return showDialog(
                       context: context,
                       builder: (context) {
@@ -117,12 +125,6 @@ class _NewCardState extends State<NewCard> {
                   _frontcontroller.clear();
                   _backcontroller.clear();
 
-                  // Navigator.pushAndRemoveUntil(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //       builder: (context) => FlashcardView(collectionName: widget.collectionName.toString())),
-                  //   (Route<dynamic> route) => false,
-                  // );
                   widget.onCardAdded();
                   Navigator.pop(context);
                 },
@@ -148,18 +150,20 @@ class _NewCardState extends State<NewCard> {
                       child: const Text(
                         'Upload Image \n from gallery',
                         style: TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
                       ),
-                      onPressed: () {
-                        _pickImageFromGallary();
-                      },
+                      onPressed: _pickImageFromGallery,
                     ),
                     MaterialButton(
                       color: Colors.green,
                       child: const Text(
                         'Upload image \n from camera',
                         style: TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        // Add functionality for camera upload
+                      },
                     ),
                     _frontImage != null
                         ? Image.file(_frontImage!)
@@ -178,16 +182,22 @@ class _NewCardState extends State<NewCard> {
                       child: const Text(
                         'Upload Image \n from gallery',
                         style: TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        // Add functionality for gallery upload
+                      },
                     ),
                     MaterialButton(
                       color: Colors.blue,
                       child: const Text(
                         'Upload image \n from camera',
                         style: TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        // Add functionality for camera upload
+                      },
                     ),
                   ],
                 ),
