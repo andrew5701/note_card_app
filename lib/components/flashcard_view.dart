@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,8 +8,9 @@ import 'package:note_card_app/card_operations/update_card.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 class CardView extends StatelessWidget {
- final String text;
+  final String text;
   final FlutterTts flutterTts = FlutterTts();
+
 
   CardView({super.key, required this.text});
 
@@ -51,8 +51,9 @@ class CardView extends StatelessWidget {
 
 class FlashcardView extends StatefulWidget {
   final String collectionName;
+  final Function refreshGroupsCallback;
 
-  const FlashcardView({super.key, required this.collectionName});
+  const FlashcardView({super.key, required this.collectionName, required this.refreshGroupsCallback});
 
   @override
   State<FlashcardView> createState() => _FlashcardViewState();
@@ -93,7 +94,8 @@ class _FlashcardViewState extends State<FlashcardView> {
           errorMessage = 'No flashcards found.';
         });
       } else {
-        List<Map<String, dynamic>> fetchedFlashcards = querySnapshot.docs.map((doc) {
+        List<Map<String, dynamic>> fetchedFlashcards =
+            querySnapshot.docs.map((doc) {
           return {
             'front': doc['front'],
             'back': doc['back'],
@@ -102,7 +104,8 @@ class _FlashcardViewState extends State<FlashcardView> {
           };
         }).toList();
 
-        fetchedFlashcards.sort((a, b) => (a['createdAt'] as Timestamp).compareTo(b['createdAt'] as Timestamp));
+        fetchedFlashcards.sort((a, b) => (a['createdAt'] as Timestamp)
+            .compareTo(b['createdAt'] as Timestamp));
         setState(() {
           flashcards = fetchedFlashcards;
           if (currentIndex >= flashcards.length) {
@@ -132,8 +135,8 @@ class _FlashcardViewState extends State<FlashcardView> {
   Widget buildAddNewCardButton() {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade400,
-                ),
+        backgroundColor: Colors.blue.shade400,
+      ),
       onPressed: () async {
         await Navigator.push(
           context,
@@ -193,17 +196,54 @@ class _FlashcardViewState extends State<FlashcardView> {
             collectionName: widget.collectionName,
             documentName: flashcards[currentIndex]['docId'] ?? '',
             onCardDeleted: () {
-              if(flashcards.length == 1) {
+              if (flashcards.length == 1) {
                 flashcards = [];
-              } 
+              }
               fetchFlashcards();
-              
             },
           ),
         ),
       );
     } else if (value == 'Delete Group') {
-      // Handle delete group action if necessary
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Group'),
+            content: const Text('Are you sure you want to delete this Group?'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('No'),
+                onPressed: () {
+                  Navigator.of(context).pop(); 
+                },
+              ),
+              TextButton(
+                child: const Text('Delete'),
+                onPressed: () async {
+                  try {
+                    String userId = FirebaseAuth.instance.currentUser!.uid;
+                    await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(userId)
+                        .collection('flashcard_groups')
+                        .doc(widget.collectionName)
+                        .delete();
+
+                    widget.refreshGroupsCallback();
+
+                    Navigator.of(context).pop();
+                  } catch (e) {
+                    print("Error deleting document: $e");
+                  }
+
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -215,36 +255,36 @@ class _FlashcardViewState extends State<FlashcardView> {
         actions: <Widget>[
           Container(
             margin: const EdgeInsets.only(right: 20),
-          child: PopupMenuButton<String>(
-            onSelected: handleMenuAction,
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(Icons.more_vert),
-                Text('Options'),
-              ],
+            child: PopupMenuButton<String>(
+              onSelected: handleMenuAction,
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.more_vert),
+                  Text('Options'),
+                ],
+              ),
+              itemBuilder: (BuildContext context) {
+                return flashcards.isEmpty
+                    ? {'Add New Card', 'Delete Group'}.map((String choice) {
+                        return PopupMenuItem<String>(
+                          value: choice,
+                          child: Text(choice),
+                        );
+                      }).toList()
+                    : {
+                        'Add New Card',
+                        'Update Card',
+                        'Delete Card',
+                        'Delete Group'
+                      }.map((String choice) {
+                        return PopupMenuItem<String>(
+                          value: choice,
+                          child: Text(choice),
+                        );
+                      }).toList();
+              },
             ),
-            itemBuilder: (BuildContext context) {
-              return flashcards.isEmpty
-                  ? {'Add New Card', 'Delete Group'}.map((String choice) {
-                      return PopupMenuItem<String>(
-                        value: choice,
-                        child: Text(choice),
-                      );
-                    }).toList()
-                  : {
-                      'Add New Card',
-                      'Update Card',
-                      'Delete Card',
-                      'Delete Group'
-                    }.map((String choice) {
-                      return PopupMenuItem<String>(
-                        value: choice,
-                        child: Text(choice),
-                      );
-                    }).toList();
-            },
-          ),
           ),
         ],
       ),
@@ -254,7 +294,7 @@ class _FlashcardViewState extends State<FlashcardView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                     'No flashcards created yet.',
+                    'No flashcards created yet.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,

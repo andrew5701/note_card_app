@@ -23,6 +23,10 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
     fetchFlashcardGroups();
   }
 
+  void refreshGroups() {
+  fetchFlashcardGroups();
+}
+
   Future<void> fetchFlashcardGroups() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -95,7 +99,10 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
                   const Text(
                     'No groups created yet.\nClick the plus button to add a new group.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -110,7 +117,10 @@ class _FlashcardGroupState extends State<FlashcardGroup> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              FlashcardView(collectionName: group),
+                              FlashcardView(
+                                collectionName: group, 
+                              refreshGroupsCallback: refreshGroups,
+                              ),
                         ),
                       );
                     },
