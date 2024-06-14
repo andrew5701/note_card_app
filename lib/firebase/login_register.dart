@@ -22,30 +22,28 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await Auth().signInWithEmailAndPassword(
           emailController.text, passwordController.text);
-      if (mounted) {
+      if (mounted && FirebaseAuth.instance.currentUser != null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const FlashcardGroup()),
         );
-      }
+      } 
     } catch (e) {
-      if (mounted) {
-        showDialog(
+      showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Error'),
+            title: const Text('Error Signing In'),
             content: Text(e.toString()),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop(); 
                 },
                 child: const Text('OK'),
               ),
             ],
           ),
         );
-      }
     }
   }
 
@@ -62,15 +60,14 @@ class _LoginPageState extends State<LoginPage> {
             .set({});
       }
 
-      if (mounted) {
+      if (mounted && FirebaseAuth.instance.currentUser != null) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const FlashcardGroup()),
         );
-      }
+      } 
     } catch (e) {
-      if (mounted) {
-        showDialog(
+       showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Error'),
@@ -78,14 +75,13 @@ class _LoginPageState extends State<LoginPage> {
             actions: <Widget>[
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop();
                 },
                 child: const Text('OK'),
               ),
             ],
           ),
         );
-      }
     }
   }
 
@@ -126,16 +122,17 @@ class _LoginPageState extends State<LoginPage> {
       margin: const EdgeInsets.only(top: 20.0),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade400,
-                ),
+          backgroundColor: Colors.blue.shade400,
+        ),
         onPressed: isLogin
             ? signInWithEmailAndPassword
             : createUserWithEmailAndPassword,
-        child: Text(isLogin ? 'Login' : 'Register',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-        ),
+        child: Text(
+          isLogin ? 'Login' : 'Register',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+          ),
         ),
       ),
     );
@@ -171,7 +168,17 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _entryField('Email', emailController),
+            Container(
+              margin: const EdgeInsets.only(bottom: 170.0),
+              child: Text(
+                "FlashCraft",
+                style: TextStyle(fontSize: 40, color: Colors.white),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 1.0),
+              child: _entryField('Email', emailController),
+            ),
             Container(
               margin: const EdgeInsets.only(top: 20.0),
               child: _entryField('Password', passwordController),

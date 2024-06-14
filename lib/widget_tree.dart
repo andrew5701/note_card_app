@@ -19,7 +19,7 @@ class _WidgetTreeState extends State<WidgetTree> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasData) {
+        } else if (snapshot.hasData && snapshot.data != null){
           return const FlashcardGroup(); 
         } else {
           return const LoginPage();
