@@ -31,21 +31,67 @@ class _NewCardState extends State<NewCard> {
   final user = FirebaseAuth.instance.currentUser;
   late final String? userId;
 
-  Future _pickImageFromGallery() async {
+  Future<void> _pickImageFromGallery() async {
     try {
-      final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
-
+      final ImagePicker _picker = ImagePicker();
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image == null) {
-        // Handle the case where the user didn't pick any image
         return;
       }
-
       setState(() {
         _frontImage = File(image.path);
       });
     } catch (e) {
-      // Handle errors, such as permission issues
       print('Error picking image: $e');
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Error picking image: $e'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final ImagePicker _picker = ImagePicker();
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image == null) {
+        return;
+      }
+      setState(() {
+        _frontImage = File(image.path);
+      });
+    } catch (e) {
+      print('Error picking image: $e');
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Error picking image: $e'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -91,7 +137,8 @@ class _NewCardState extends State<NewCard> {
                   backgroundColor: Colors.blue.shade400,
                 ),
                 onPressed: () async {
-                  if (_frontcontroller.text.isEmpty || _backcontroller.text.isEmpty) {
+                  if (_frontcontroller.text.isEmpty ||
+                      _backcontroller.text.isEmpty) {
                     return showDialog(
                       context: context,
                       builder: (context) {
@@ -161,12 +208,15 @@ class _NewCardState extends State<NewCard> {
                         style: TextStyle(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                      onPressed: () {
-                        // Add functionality for camera upload
-                      },
+                      onPressed: _pickImageFromCamera,
                     ),
                     _frontImage != null
-                        ? Image.file(_frontImage!)
+                        ? Image.file(
+                            _frontImage!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          )
                         : const Text('No image selected')
                   ],
                 ),
