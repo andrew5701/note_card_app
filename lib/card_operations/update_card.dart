@@ -22,7 +22,6 @@ class UpdateCard extends StatefulWidget {
 }
 
 class _UpdateCardState extends State<UpdateCard> {
-
   final TextEditingController _frontcontroller = TextEditingController();
   final TextEditingController _backcontroller = TextEditingController();
 
@@ -52,21 +51,36 @@ class _UpdateCardState extends State<UpdateCard> {
       body: Center(
         child: Column(
           children: <Widget>[
-            TextField(
-              controller: _frontcontroller,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Front',
+            Container(
+              margin: const EdgeInsets.only(top: 200.0),
+              width: 380,
+              child: TextField(
+                controller: _frontcontroller,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Front',
+                  fillColor: Colors.white,
+                  filled: true,
+                ),
               ),
             ),
-            TextField(
-              controller: _backcontroller,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Back',
+            Container(
+              margin: const EdgeInsets.only(top: 20.0,bottom: 30.0),
+              width: 380,
+              child: TextField(
+                controller: _backcontroller,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Back',
+                  fillColor: Colors.white,
+                  filled: true,
+                ),
               ),
             ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade400,
+                ),
               onPressed: () {
                 userId = user!.uid;
                 FirestoreService.instance
@@ -83,11 +97,15 @@ class _UpdateCardState extends State<UpdateCard> {
                 _frontcontroller.clear();
                 _backcontroller.clear();
 
-               
                 widget.onCardUpdated();
                 Navigator.pop(context);
               },
-              child: const Text('Update Card'),
+              child: const Text(
+                  'Update Card',
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
             ),
           ],
         ),

@@ -7,12 +7,14 @@ import 'package:note_card_app/card_operations/new_card.dart';
 import 'package:note_card_app/card_operations/update_card.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+import 'dart:io';
+
 class CardView extends StatelessWidget {
   final String text;
+  String imagePath;
   final FlutterTts flutterTts = FlutterTts();
 
-
-  CardView({super.key, required this.text});
+  CardView({super.key, required this.text, this.imagePath = ''});
 
   void _speak() async {
     await flutterTts.speak(text);
@@ -20,6 +22,13 @@ class CardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool hasText = text.isNotEmpty;
+
+
+    print(imagePath.replaceFirst('File Path:', 'File:'));
+
+    imagePath = imagePath.replaceFirst('File Path:', 'File:');
+
     return Card(
       elevation: 10,
       shadowColor: Colors.black,
@@ -33,21 +42,56 @@ class CardView extends StatelessWidget {
             ),
           ),
           Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 20,
-                ),
-              ),
-            ),
+            child: hasText
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            text,
+                            style: const TextStyle(
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (imagePath.isNotEmpty && File(imagePath).existsSync())
+                        Expanded(
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              maxWidth: 200.0,
+                              maxHeight: 200.0,
+                            ),
+                            child: Image.file(
+                              File("File: '/Users/andrewkrasuski/Library/Developer/CoreSimulator/Devices/310C7154-5830-4373-8947-6D4A18566389/data/Containers/Data/Application/71FAED07-4E86-47DC-A81D-CAE172878107/tmp/image_picker_905BB761-95CE-498F-9E7E-50BCFEC58102-5250-000000306A95A3BA.jpg'"),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+                : (imagePath.isNotEmpty && File(imagePath).existsSync()
+                    ? Container(
+                        constraints: const BoxConstraints(
+                          maxWidth: 200.0,
+                          maxHeight: 200.0,
+                        ),
+                        child: Image.file(
+                          File(imagePath),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Container()),
           ),
         ],
       ),
     );
   }
 }
+
+
 
 class FlashcardView extends StatefulWidget {
   final String collectionName;
@@ -99,6 +143,8 @@ class _FlashcardViewState extends State<FlashcardView> {
           return {
             'front': doc['front'],
             'back': doc['back'],
+            'frontImage': doc['frontImage'],
+            'backImage': doc['backImage'],
             'docId': doc.id,
             'createdAt': doc['createdAt'],
           };
@@ -315,9 +361,11 @@ class _FlashcardViewState extends State<FlashcardView> {
                       child: FlipCard(
                         front: CardView(
                           text: flashcards[currentIndex]['front'] ?? '',
+                          imagePath: flashcards[currentIndex]['frontImage'] ?? '',
                         ),
                         back: CardView(
                           text: flashcards[currentIndex]['back'] ?? '',
+                          imagePath: flashcards[currentIndex]['backImage'] ?? '',
                         ),
                       ),
                     ),
