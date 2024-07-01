@@ -31,7 +31,9 @@ class _NewCardState extends State<NewCard> {
   final user = FirebaseAuth.instance.currentUser;
   late final String? userId;
 
-  Future<void> _pickImageFromGallery() async {
+  
+
+  Future<void> _pickImageFromGallery(bool isFront) async {
     try {
       final ImagePicker _picker = ImagePicker();
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -39,7 +41,11 @@ class _NewCardState extends State<NewCard> {
         return;
       }
       setState(() {
-        _frontImage = File(image.path);
+        if(isFront){
+          _frontImage = File(image.path);
+        } else {
+          _backImage = File(image.path);
+        }
       });
     } catch (e) {
       print('Error picking image: $e');
@@ -63,7 +69,7 @@ class _NewCardState extends State<NewCard> {
     }
   }
 
-  Future<void> _pickImageFromCamera() async {
+  Future<void> _pickImageFromCamera(bool isFront) async {
     try {
       final ImagePicker _picker = ImagePicker();
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
@@ -71,7 +77,11 @@ class _NewCardState extends State<NewCard> {
         return;
       }
       setState(() {
-        _frontImage = File(image.path);
+        if(isFront){
+          _frontImage = File(image.path);
+        } else {
+          _backImage = File(image.path);
+        }
       });
     } catch (e) {
       print('Error picking image: $e');
@@ -199,7 +209,7 @@ class _NewCardState extends State<NewCard> {
                         style: TextStyle(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                      onPressed: _pickImageFromGallery,
+                      onPressed: () => _pickImageFromGallery(true),
                     ),
                     MaterialButton(
                       color: Colors.green,
@@ -208,7 +218,7 @@ class _NewCardState extends State<NewCard> {
                         style: TextStyle(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                      onPressed: _pickImageFromCamera,
+                      onPressed: () => _pickImageFromCamera(true),
                     ),
                     _frontImage != null
                         ? Image.file(
@@ -234,9 +244,7 @@ class _NewCardState extends State<NewCard> {
                         style: TextStyle(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                      onPressed: () {
-                        // Add functionality for gallery upload
-                      },
+                      onPressed: () => _pickImageFromGallery(false),
                     ),
                     MaterialButton(
                       color: Colors.blue,
@@ -245,10 +253,16 @@ class _NewCardState extends State<NewCard> {
                         style: TextStyle(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                      onPressed: () {
-                        // Add functionality for camera upload
-                      },
+                      onPressed: () => _pickImageFromCamera(false),
                     ),
+                    _backImage != null
+                        ? Image.file(
+                            _frontImage!,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          )
+                        : const Text('No image selected')
                   ],
                 ),
               ],
