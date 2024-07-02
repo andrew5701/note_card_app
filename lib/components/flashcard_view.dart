@@ -6,15 +6,14 @@ import 'package:note_card_app/card_operations/delete_card.dart';
 import 'package:note_card_app/card_operations/new_card.dart';
 import 'package:note_card_app/card_operations/update_card.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-
-import 'dart:io';
+import 'package:auto_size_text/auto_size_text.dart';
 
 class CardView extends StatelessWidget {
   final String text;
-  String imagePath;
+  final String imageUrl;
   final FlutterTts flutterTts = FlutterTts();
 
-  CardView({super.key, required this.text, this.imagePath = ''});
+  CardView({super.key, required this.text, this.imageUrl = ''});
 
   void _speak() async {
     await flutterTts.speak(text);
@@ -23,11 +22,7 @@ class CardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool hasText = text.isNotEmpty;
-
-
-    print(imagePath.replaceFirst('File Path:', 'File:'));
-
-    imagePath = imagePath.replaceFirst('File Path:', 'File:');
+    bool hasImage = imageUrl.isNotEmpty;
 
     return Card(
       elevation: 10,
@@ -42,48 +37,67 @@ class CardView extends StatelessWidget {
             ),
           ),
           Center(
-            child: hasText
+            child: hasText && hasImage
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: Text(
+                          child: AutoSizeText(
                             text,
                             style: const TextStyle(
                               fontSize: 20,
                             ),
+                            maxLines: 5,
+                            minFontSize: 10,
+                            stepGranularity: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
-                      if (imagePath.isNotEmpty && File(imagePath).existsSync())
-                        Expanded(
-                          child: Container(
+                      Expanded(
+                        child: Container(
+                          constraints: const BoxConstraints(
+                            maxWidth: 200.0,
+                            maxHeight: 200.0,
+                          ),
+                          margin: const EdgeInsets.only(
+                              right: 16.0), // Added right margin
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : hasText
+                    ? Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: AutoSizeText(
+                          text,
+                          style: const TextStyle(
+                            fontSize: 20,
+                          ),
+                          maxLines: 5,
+                          minFontSize: 10,
+                          stepGranularity: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    : hasImage
+                        ? Container(
                             constraints: const BoxConstraints(
                               maxWidth: 200.0,
                               maxHeight: 200.0,
                             ),
-                            child: Image.file(
-                              File("File: '/Users/andrewkrasuski/Library/Developer/CoreSimulator/Devices/310C7154-5830-4373-8947-6D4A18566389/data/Containers/Data/Application/71FAED07-4E86-47DC-A81D-CAE172878107/tmp/image_picker_905BB761-95CE-498F-9E7E-50BCFEC58102-5250-000000306A95A3BA.jpg'"),
+                            child: Image.network(
+                              imageUrl,
                               fit: BoxFit.cover,
                             ),
-                          ),
-                        ),
-                    ],
-                  )
-                : (imagePath.isNotEmpty && File(imagePath).existsSync()
-                    ? Container(
-                        constraints: const BoxConstraints(
-                          maxWidth: 200.0,
-                          maxHeight: 200.0,
-                        ),
-                        child: Image.file(
-                          File(imagePath),
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Container()),
+                          )
+                        : Container(),
           ),
         ],
       ),
@@ -91,13 +105,14 @@ class CardView extends StatelessWidget {
   }
 }
 
-
-
 class FlashcardView extends StatefulWidget {
   final String collectionName;
   final Function refreshGroupsCallback;
 
-  const FlashcardView({super.key, required this.collectionName, required this.refreshGroupsCallback});
+  const FlashcardView(
+      {super.key,
+      required this.collectionName,
+      required this.refreshGroupsCallback});
 
   @override
   State<FlashcardView> createState() => _FlashcardViewState();
@@ -143,8 +158,8 @@ class _FlashcardViewState extends State<FlashcardView> {
           return {
             'front': doc['front'],
             'back': doc['back'],
-            'frontImage': doc['frontImage'],
-            'backImage': doc['backImage'],
+            'frontImage': doc['frontImageUrl'] ?? '',
+            'backImage': doc['backImageUrl'] ?? '',
             'docId': doc.id,
             'createdAt': doc['createdAt'],
           };
@@ -235,20 +250,46 @@ class _FlashcardViewState extends State<FlashcardView> {
         ),
       );
     } else if (value == 'Delete Card') {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DeleteCard(
-            collectionName: widget.collectionName,
-            documentName: flashcards[currentIndex]['docId'] ?? '',
-            onCardDeleted: () {
-              if (flashcards.length == 1) {
-                flashcards = [];
-              }
-              fetchFlashcards();
-            },
-          ),
-        ),
+       showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete Card'),
+            content: const Text('Are you sure you want to delete this Card?'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('No'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('Delete'),
+                onPressed: () async {
+                  try {
+                    String userId = FirebaseAuth.instance.currentUser!.uid;
+                    await FirebaseFirestore.instance
+                      .collection("users")
+                      .doc(userId.toString())
+                      .collection('flashcard_groups')
+                      .doc(widget.collectionName.toString())
+                      .collection('flashcards')
+                      .doc(flashcards[currentIndex]['docId'])
+                      .delete();
+
+                    fetchFlashcards();
+                    Navigator.of(context).pop();
+
+                  } catch (e) {
+                    print("Error deleting document: $e");
+                  }
+
+
+                },
+              ),
+            ],
+          );
+        },
       );
     } else if (value == 'Delete Group') {
       showDialog(
@@ -261,7 +302,7 @@ class _FlashcardViewState extends State<FlashcardView> {
               TextButton(
                 child: const Text('No'),
                 onPressed: () {
-                  Navigator.of(context).pop(); 
+                  Navigator.of(context).pop();
                 },
               ),
               TextButton(
@@ -361,11 +402,12 @@ class _FlashcardViewState extends State<FlashcardView> {
                       child: FlipCard(
                         front: CardView(
                           text: flashcards[currentIndex]['front'] ?? '',
-                          imagePath: flashcards[currentIndex]['frontImage'] ?? '',
+                          imageUrl:
+                              flashcards[currentIndex]['frontImage'] ?? '',
                         ),
                         back: CardView(
                           text: flashcards[currentIndex]['back'] ?? '',
-                          imagePath: flashcards[currentIndex]['backImage'] ?? '',
+                          imageUrl: flashcards[currentIndex]['backImage'] ?? '',
                         ),
                       ),
                     ),
