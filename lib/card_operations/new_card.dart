@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:note_card_app/firebase/firestore_instance.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as Path;
 
 class NewCard extends StatefulWidget {
   final String collectionName;
@@ -31,8 +33,6 @@ class _NewCardState extends State<NewCard> {
   final user = FirebaseAuth.instance.currentUser;
   late final String? userId;
 
-  
-
   Future<void> _pickImageFromGallery(bool isFront) async {
     try {
       final ImagePicker _picker = ImagePicker();
@@ -41,7 +41,7 @@ class _NewCardState extends State<NewCard> {
         return;
       }
       setState(() {
-        if(isFront){
+        if (isFront) {
           _frontImage = File(image.path);
         } else {
           _backImage = File(image.path);
@@ -49,23 +49,7 @@ class _NewCardState extends State<NewCard> {
       });
     } catch (e) {
       print('Error picking image: $e');
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: Text('Error picking image: $e'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      _showErrorDialog(e);
     }
   }
 
@@ -77,7 +61,7 @@ class _NewCardState extends State<NewCard> {
         return;
       }
       setState(() {
-        if(isFront){
+        if (isFront) {
           _frontImage = File(image.path);
         } else {
           _backImage = File(image.path);
@@ -85,12 +69,54 @@ class _NewCardState extends State<NewCard> {
       });
     } catch (e) {
       print('Error picking image: $e');
-      showDialog(
+      _showErrorDialog(e);
+    }
+  }
+
+  Future<void> _showErrorDialog(dynamic e) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text('Error picking image: $e'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<String?> _uploadImageToStorage(File image) async {
+    try {
+      String fileName = Path.basename(image.path);
+      Reference storageReference =
+          FirebaseStorage.instance.ref().child('uploads/${user!.uid}/$fileName');
+      UploadTask uploadTask = storageReference.putFile(image);
+      await uploadTask.whenComplete(() => null);
+      String downloadURL = await storageReference.getDownloadURL();
+      return downloadURL;
+    } catch (e) {
+      print('Error uploading image: $e');
+      _showErrorDialog(e);
+      return null;
+    }
+  }
+
+  Future<void> _addCard() async {
+    if ((_frontcontroller.text.isEmpty || _backcontroller.text.isEmpty) && (_frontImage == null || _backImage == null)) {
+      return showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text('Error picking image: $e'),
+            content: const Text('Please fill in both fields'),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -103,6 +129,42 @@ class _NewCardState extends State<NewCard> {
         },
       );
     }
+
+    userId = user!.uid;
+    String? frontImageUrl;
+    String? backImageUrl;
+
+    if (_frontImage != null) {
+      frontImageUrl = await _uploadImageToStorage(_frontImage!);
+    }
+
+    if (_backImage != null) {
+      backImageUrl = await _uploadImageToStorage(_backImage!);
+    }
+
+    FirestoreService.instance
+        .collection("users")
+        .doc(userId.toString())
+        .collection('flashcard_groups')
+        .doc(widget.collectionName.toString())
+        .collection('flashcards')
+        .add({
+      'front': _frontcontroller.text,
+      'back': _backcontroller.text,
+      'frontImageUrl': frontImageUrl,
+      'backImageUrl': backImageUrl,
+      'createdAt': DateTime.now(),
+    });
+
+    _frontcontroller.clear();
+    _backcontroller.clear();
+    setState(() {
+      _frontImage = null;
+      _backImage = null;
+    });
+
+    widget.onCardAdded();
+    Navigator.pop(context);
   }
 
   @override
@@ -146,45 +208,7 @@ class _NewCardState extends State<NewCard> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade400,
                 ),
-                onPressed: () async {
-                  if (_frontcontroller.text.isEmpty ||
-                      _backcontroller.text.isEmpty) {
-                    return showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Error'),
-                          content: const Text('Please fill in both fields'),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                  userId = user!.uid;
-                  FirestoreService.instance
-                      .collection("users")
-                      .doc(userId.toString())
-                      .collection('flashcard_groups')
-                      .doc(widget.collectionName.toString())
-                      .collection('flashcards')
-                      .add({
-                    'front': _frontcontroller.text,
-                    'back': _backcontroller.text,
-                    'createdAt': DateTime.now(),
-                  });
-                  _frontcontroller.clear();
-                  _backcontroller.clear();
-
-                  widget.onCardAdded();
-                  Navigator.pop(context);
-                },
+                onPressed: _addCard,
                 child: const Text(
                   'Add Card',
                   style: TextStyle(
@@ -257,7 +281,7 @@ class _NewCardState extends State<NewCard> {
                     ),
                     _backImage != null
                         ? Image.file(
-                            _frontImage!,
+                            _backImage!,
                             width: 100,
                             height: 100,
                             fit: BoxFit.cover,
